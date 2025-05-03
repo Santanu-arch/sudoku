@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2x2 Sudoku (4x4)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #sudoku {
+      display: grid;
+      grid-template-columns: repeat(4, 40px);
+      grid-template-rows: repeat(4, 40px);
+      margin: 20px auto;
+      width: 160px;
+    }
+
+    input {
+      width: 38px;
+      height: 38px;
+      text-align: center;
+      font-size: 16px;
+      border: 1px solid #999;
+    }
+
+    input.prefilled {
+      background-color: #ddd;
+      font-weight: bold;
+    }
+
+    input.incorrect {
+      background-color: #ffcccc;
+    }
+
+    #message {
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    button {
+      margin: 5px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #buttons {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>2×2 Sudoku (4×4)</h1>
+  <div id="sudoku"></div>
+  <div id="buttons">
+    <button onclick="generateSudoku()">New Game</button>
+    <button onclick="checkGrid()">Check</button>
+  </div>
+  <div id="message"></div>
+
+  <script>
+    let inputs = [];
+
+    function generateSudoku() {
+      const sudoku = document.getElementById("sudoku");
+      const message = document.getElementById("message");
+      message.textContent = "";
+      message.style.color = "green";
+      sudoku.innerHTML = "";
+      inputs = [];
+
+      const grid = Array.from({ length: 4 }, () => Array(4).fill(""));
+
+      let filled = 0;
+      while (filled < 4) {
+        const row = Math.floor(Math.random() * 4);
+        const col = Math.floor(Math.random() * 4);
+        const num = Math.floor(Math.random() * 4) + 1;
+
+        if (!grid[row][col] && isValid(grid, row, col, num)) {
+          grid[row][col] = num;
+          filled++;
+        }
+      }
+
+      for (let i = 0; i < 4; i++) {
+        inputs[i] = [];
+        for (let j = 0; j < 4; j++) {
+          const input = document.createElement("input");
+          input.maxLength = 1;
+          input.dataset.row = i;
+          input.dataset.col = j;
+
+          if (grid[i][j]) {
+            input.value = grid[i][j];
+            input.disabled = true;
+            input.classList.add("prefilled");
+          }
+
+          inputs[i][j] = input;
+          sudoku.appendChild(input);
+        }
+      }
+    }
+
+    function isValid(grid, row, col, num) {
+      for (let i = 0; i < 4; i++) {
+        if (grid[row][i] == num || grid[i][col] == num) {
+          return false;
+        }
+      }
+
+      const boxStartRow = row - (row % 2);
+      const boxStartCol = col - (col % 2);
+
+      for (let i = 0; i < 2; i++) {
+        for (let j = 0; j < 2; j++) {
+          if (grid[boxStartRow + i][boxStartCol + j] == num) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    function checkGrid() {
+      const grid = Array.from({ length: 4 }, () => Array(4).fill(0));
+      let allFilled = true;
+
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          const input = inputs[i][j];
+          const val = input.value;
+          input.classList.remove("incorrect");
+
+          if (val === "" || isNaN(val) || val < 1 || val > 4) {
+            allFilled = false;
+            continue;
+          }
+
+          grid[i][j] = parseInt(val);
+        }
+      }
+
+      let hasError = false;
+
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          const val = grid[i][j];
+          if (val === 0) continue;
+
+          for (let col = 0; col < 4; col++) {
+            if (col !== j && grid[i][col] === val) {
+              inputs[i][j].classList.add("incorrect");
+              hasError = true;
+            }
+          }
+
+          for (let row = 0; row < 4; row++) {
+            if (row !== i && grid[row][j] === val) {
+              inputs[i][j].classList.add("incorrect");
+              hasError = true;
+            }
+          }
+
+          const boxRow = i - (i % 2);
+          const boxCol = j - (j % 2);
+          for (let r = 0; r < 2; r++) {
+            for (let c = 0; c < 2; c++) {
+              const ri = boxRow + r;
+              const ci = boxCol + c;
+              if ((ri !== i || ci !== j) && grid[ri][ci] === val) {
+                inputs[i][j].classList.add("incorrect");
+                hasError = true;
+              }
+            }
+          }
+        }
+      }
+
+      const message = document.getElementById("message");
+      if (!hasError && allFilled) {
+        message.textContent = "Congratulations! Puzzle Complete!";
+        message.style.color = "green";
+      } else if (hasError) {
+        message.textContent = "There are some incorrect numbers.";
+        message.style.color = "red";
+      } else {
+        message.textContent = "Please fill in all cells.";
+        message.style.color = "orange";
+      }
+    }
+
+    generateSudoku();
+  </script>
+</body>
+</html>
